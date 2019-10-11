@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html style="font-size: 13.33vw">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>上下滑动翻页</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        .wrapper {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            position: absolute;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-flow: column wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #box {
+            width: 3.20rem;
+            height: 5.10rem;
+            background: url(./images/bz0.jpg) no-repeat top center;
+            background-size: 100% auto;
+            /*background: red;*/
+            /*margin: 50px auto;*/
+            position: relative;
+            perspective: 1200px;
+            -webkit-perspective: 1200px;
+            /*border: 1px solid red;*/
+            border-radius: 0.10rem;
+            -webkit-border-radius: 0.10rem;
+            overflow: hidden;
+
+            -webkit-box-shadow: 5px 5px 25px rgba(2, 2, 2, 0.81);
+            box-shadow: 5px 5px 25px rgba(2, 2, 2, 0.81);
+        }
+
+        #box .pag1 {
+            width: 100%;
+            height: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            z-index: 2;
+            transform-origin: top center 0;
+            -webkit-transform-origin: top center 0;
+            transform: rotateX(90deg);
+            -webkit-transform: rotateX(90deg);
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            border-radius: 0.10rem;
+            -webkit-border-radius: 0.10rem;
+            /*opacity: 0;*/
+
+        }
+
+        #box .pag1 span {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            background-size: 100% auto;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+
+        }
+
+        .front {
+            background: url(./images/bz0.jpg) no-repeat bottom center;
+            transform: translateZ(0.01rem);
+            z-index: 100;
+            border-bottom-left-radius: 0.10rem;
+            border-bottom-right-radius: 0.10rem;
+            -webkit-border-bottom-left-radius: 0.10rem;
+            -webkit-border-bottom-right-radius: 0.10rem;
+        }
+
+        .back {
+            background: url(./images/bz1.jpg) no-repeat top center;
+            transform: translateZ(-0.01rem) scale(1, -1);
+            z-index: 10;
+            border-top-left-radius: 0.10rem;
+            border-top-right-radius: 0.10rem;
+            -webkit-border-top-left-radius: 0.10rem;
+            -webkit-border-top-right-radius: 0.10rem;
+        }
+
+        .pag2 {
+            width: 100%;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            height: 50%;
+            background: url(./images/bz0.jpg) no-repeat bottom center;
+            z-index: 1;
+            overflow: hidden;
+            background-size: 100% auto;
+            -webkit-border-bottom-left-radius: 0.10rem;
+            -webkit-border-bottom-right-radius: 0.10rem;
+        }
+    </style>
+
+</head>
+<body style="">
+<div class="wrapper">
+    <span style="font-size: 0.2rem  ;  margin-bottom: 0.2rem;">上下滑动翻页</span>
+    <div id="box">
+        <div class="pag1">
+            <span class="front"></span>
+            <span class="back"></span>
+        </div>
+        <div class="pag2"></div>
+    </div>
+</div>
+<script>
+    window.onload = function () {
+
+
+        /**
+         * 图片预加载
+         */
+        var promiseArr = []
+        for (let i = 0; i < 10; i++) {
+            let imgObj = new Image(); // 创建图片对象
+            imgObj.src = './images/bz' + i + '.jpg';
+            promiseArr[i] = new Promise(((resolve, reject) => {
+                imgObj.addEventListener('load', function () {
+                    console.log('imgs ' + i + ' has load');
+                    resolve()
+                }, false);
+            }))
+
+        }
+        Promise.all(promiseArr).then(() => {
+            console.log('预加载结束')
+            init()//执行逻辑
+        })
+
+
+        function init() {
+            var oBox = document.getElementById('box');
+            var oPag = document.querySelector('#box .pag1');
+            var oFront = document.querySelector('#box .pag1 .front');
+            var oBack = document.querySelector('#box .pag1 .back');
+            var oPag2 = document.querySelector('#box .pag2');
+
+            var iNow = 0;
+            var bReady = true;
+            var flag = 'center'
+
+            document.addEventListener('touchmove', function (e) {
+                e.preventDefault()
+            }, {passive: false})
+            var startX, startY, moveEndX, moveEndY, X, Y
+            oBox.addEventListener('touchstart', function (e) {
+                startY = e.touches[0].pageY;
+                Y = 0
+            })
+            oBox.addEventListener('touchmove', function (e) {
+            })
+            oBox.addEventListener('touchend', function (e) {
+                moveEndY = e.changedTouches[0].pageY;
+                Y = moveEndY - startY;
+                startY = 0
+                oBox.style.overflow = 'visible'
+                if (Y > 0 && Math.abs(Y) > 125) {
+                    if (bReady == false) return;
+                    bReady = false;
+                    flag = 'down'
+                    //循序判断
+                    if ((iNow - 1) < 0) {
+                        iNow = iNow + 10
+                    }
+                    oFront.style.backgroundImage = oBox.style.backgroundImage = 'url(./images/bz' + (iNow - 1) % 10 + '.jpg)';  //5有几张banner就%几
+                    oBack.style.backgroundImage = oPag2.style.backgroundImage = 'url(./images/bz' + (iNow) % 10 + '.jpg)';
+                    oPag.style.transform = 'rotateX(180deg)';
+                    oPag.style.WebkitTransform = 'rotateX(180deg)';
+                    oPag.style.transition = '0.4s all ease';
+                    oPag.style.WebkitTransition = '0.4s all ease';
+                    oPag.style.transform = 'rotateX(0deg)';
+                    oPag.style.WebkitTransform = 'rotateX(0deg)';
+                } else if (Y < 0 && Math.abs(Y) > 125) {
+                    if (bReady == false) return;
+                    bReady = false;
+                    flag = 'up'
+                    oFront.style.backgroundImage = oBox.style.backgroundImage = 'url(./images/bz' + iNow % 10 + '.jpg)';  //5有几张banner就%几
+                    oBack.style.backgroundImage = oPag2.style.backgroundImage = 'url(./images/bz' + (iNow + 1) % 10 + '.jpg)';
+                    oPag.style.transform = 'rotateX(0deg)';
+                    oPag.style.WebkitTransform = 'rotateX(0deg)';
+                    oPag.style.transition = '0.4s all ease';
+                    oPag.style.WebkitTransition = '0.4s all ease';
+                    oPag.style.transform = 'rotateX(180deg)';
+                    oPag.style.WebkitTransform = 'rotateX(180deg)';
+                }
+
+            })
+            oPag.addEventListener('transitionend', function () {
+                oBox.style.overflow = 'hidden'
+                oPag.style.transition = 'none';
+                oPag.style.WebkitTransition = 'none'; //WebkitTransition
+                oPag.style.transform = 'rotateX(90deg)';
+                oPag.style.WebkitTransform = 'rotateX(90deg)';
+                bReady = true;
+                if (flag == 'up') {
+                    oBox.style.backgroundImage = oPag2.style.backgroundImage = 'url(./images/bz' + (iNow + 1) % 10 + '.jpg)';
+                    iNow++
+                } else if (flag == 'down') {
+                    oBox.style.backgroundImage = oPag2.style.backgroundImage = 'url(./images/bz' + (iNow - 1) % 10 + '.jpg)';
+                    iNow--
+                }
+                console.log(`end now is ${iNow % 10}`);
+                const event = new Event('click');
+                oBox.dispatchEvent(event);
+            }, false);
+            oBox.addEventListener('click', function () {
+                console.log('You Clicked Me')
+            })
+
+        }
+
+
+    }
+</script>
+
+</body>
+</html>
